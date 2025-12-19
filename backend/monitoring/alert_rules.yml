@@ -1,0 +1,241 @@
+# 老人监护管理系统 Prometheus 告警规则
+# 作者: System
+# 版本: 1.0.0
+
+groups:
+  # 系统可用性告警
+  - name: system.availability
+    rules:
+      # 服务不可用告警
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "服务 {{ $labels.instance }} 不可用"
+          description: "服务 {{ $labels.instance }} 已经超过1分钟无法访问"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/service-down"
+
+      # 高错误率告警
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "服务 {{ $labels.instance }} 错误率过高"
+          description: "服务 {{ $labels.instance }} 在过去5分钟内错误率超过10%"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/high-error-rate"
+
+  # 性能告警
+  - name: system.performance
+    rules:
+      # 高响应时间告警
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 3m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "服务 {{ $labels.instance }} 响应时间过长"
+          description: "服务 {{ $labels.instance }} 的95%分位响应时间超过2秒"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/high-response-time"
+
+      # 高CPU使用率告警
+      - alert: HighCpuUsage
+        expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: "服务 {{ $labels.instance }} CPU使用率过高"
+          description: "服务 {{ $labels.instance }} CPU使用率超过80%"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/high-cpu-usage"
+
+      # 高内存使用率告警
+      - alert: HighMemoryUsage
+        expr: (jvm_memory_used_bytes / jvm_memory_max_bytes) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: "服务 {{ $labels.instance }} 内存使用率过高"
+          description: "服务 {{ $labels.instance }} 内存使用率超过85%"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/high-memory-usage"
+
+  # 业务指标告警
+  - name: business.metrics
+    rules:
+      # 健康数据接收异常告警
+      - alert: HealthDataReceivingAnomaly
+        expr: rate(health_data_received_total[5m]) < 0.5
+        for: 2m
+        labels:
+          severity: warning
+          category: business
+        annotations:
+          summary: "健康数据接收异常"
+          description: "在过去5分钟内健康数据接收速率低于正常水平"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/health-data-anomaly"
+
+      # 设备离线告警
+      - alert: DeviceOffline
+        expr: device_online_status == 0
+        for: 5m
+        labels:
+          severity: warning
+          category: business
+        annotations:
+          summary: "设备 {{ $labels.device_id }} 离线"
+          description: "设备 {{ $labels.device_id }} 已经超过5分钟未上报数据"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/device-offline"
+
+      # 高频预警告警
+      - alert: HighAlertFrequency
+        expr: rate(alerts_created_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          category: business
+        annotations:
+          summary: "预警频率过高"
+          description: "在过去5分钟内预警创建频率超过10个/分钟"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/high-alert-frequency"
+
+      # 通知发送失败告警
+      - alert: NotificationSendingFailed
+        expr: rate(notification_sent_failed_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          category: business
+        annotations:
+          summary: "通知发送失败率过高"
+          description: "在过去5分钟内通知发送失败率超过10%"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/notification-failed"
+
+  # 数据库告警
+  - name: database.metrics
+    rules:
+      # 数据库连接数告警
+      - alert: DatabaseConnectionHigh
+        expr: pg_stat_database_numbackends / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "数据库连接数过高"
+          description: "数据库连接数使用率超过80%"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/db-connection-high"
+
+      # 数据库慢查询告警
+      - alert: DatabaseSlowQuery
+        expr: rate(pg_stat_statements_mean_time_seconds[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "数据库慢查询"
+          description: "数据库平均查询时间超过1秒"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/db-slow-query"
+
+      # 数据库磁盘空间告警
+      - alert: DatabaseDiskSpaceHigh
+        expr: (pg_database_size_bytes / 1024 / 1024 / 1024) > 50
+        for: 10m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "数据库磁盘空间不足"
+          description: "数据库大小超过50GB"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/db-disk-space"
+
+  # Redis告警
+  - name: redis.metrics
+    rules:
+      # Redis内存使用率告警
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: cache
+        annotations:
+          summary: "Redis内存使用率过高"
+          description: "Redis内存使用率超过85%"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/redis-memory-high"
+
+      # Redis连接数告警
+      - alert: RedisConnectionHigh
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+          category: cache
+        annotations:
+          summary: "Redis连接数过高"
+          description: "Redis连接数超过100"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/redis-connection-high"
+
+  # 安全告警
+  - name: security.metrics
+    rules:
+      # 异常登录尝试告警
+      - alert: SuspiciousLoginAttempts
+        expr: rate(login_attempts_failed_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "异常登录尝试"
+          description: "在过去5分钟内失败登录尝试超过5次/分钟"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/suspicious-login"
+
+      # API调用频率异常告警
+      - alert: ApiRateAnomaly
+        expr: rate(http_requests_total[5m]) > 100
+        for: 3m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "API调用频率异常"
+          description: "API调用频率异常高，可能存在攻击"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/api-rate-anomaly"
+
+  # 业务健康度告警
+  - name: business.health
+    rules:
+      # 在线用户数异常告警
+      - alert: OnlineUsersAnomaly
+        expr: online_users_count < 10
+        for: 10m
+        labels:
+          severity: info
+          category: business
+        annotations:
+          summary: "在线用户数异常"
+          description: "在线用户数低于10，可能存在系统问题"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/online-users-anomaly"
+
+      # 数据同步延迟告警
+      - alert: DataSyncDelay
+        expr: data_sync_delay_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+          category: business
+        annotations:
+          summary: "数据同步延迟"
+          description: "数据同步延迟超过5分钟"
+          runbook_url: "https://wiki.elderly-monitoring.com/runbooks/data-sync-delay"

@@ -1,0 +1,1264 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>长辈级界面助手 - 家属管理后台 (演示版)</title>
+    <link rel="stylesheet" href="public/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- 现代化美化样式 -->
+    <style>
+        /* 现代化美化样式 - 适合老年用户的温暖设计 */
+        
+        /* 增强的全局样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #F5F7FA 0%, #E8F4F8 100%);
+            min-height: 100vh;
+            color: #2C3E50;
+            font-size: 16px; /* 增大基础字体，适合老年用户 */
+            line-height: 1.6;
+        }
+        
+        /* 增强的应用容器 */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #F5F7FA 0%, #E8F4F8 100%);
+            position: relative;
+        }
+        
+        .app-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%2320B2AA" fill-opacity="0.03"><circle cx="30" cy="30" r="4"/></g></svg>') repeat;
+            pointer-events: none;
+        }
+        
+        /* 增强的头部样式 */
+        .header {
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 80px; /* 增加高度，更适合老年用户 */
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* 增强的Logo样式 */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #20B2AA 0%, #4FD1C5 100%);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(32, 178, 170, 0.2);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .logo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(32, 178, 170, 0.3);
+        }
+        
+        .logo i {
+            font-size: 2rem;
+            color: #fff;
+        }
+        
+        .logo h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+        }
+        
+        .demo-badge {
+            background: rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* 增强的导航菜单 */
+        .nav-menu {
+            display: flex;
+            gap: 0.5rem;
+            flex: 1;
+            justify-content: center;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            border: 2px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f7ff 100%);
+            color: #20B2AA;
+            transform: translateY(-2px);
+            border-color: rgba(32, 178, 170, 0.3);
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(135deg, #20B2AA 0%, #4FD1C5 100%);
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(32, 178, 170, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .nav-item i {
+            font-size: 1.2rem;
+        }
+        
+        /* 增强的用户信息区域 */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .current-time {
+            font-size: 1rem;
+            color: #6c757d;
+            font-weight: 500;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #20B2AA 0%, #4FD1C5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(32, 178, 170, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(32, 178, 170, 0.4);
+        }
+        
+        /* 增强的主要内容区域 */
+        .main-content {
+            flex: 1;
+            padding: 2.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* 增强的页面标题 */
+        .page-header {
+            margin-bottom: 2.5rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e8e8e8;
+        }
+        
+        .page-header h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2C3E50;
+            margin-bottom: 0.8rem;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .page-header h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 32px;
+            background: linear-gradient(180deg, #20B2AA 0%, #4FD1C5 100%);
+            border-radius: 3px;
+        }
+        
+        .page-header p {
+            color: #6c757d;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+        
+        /* 增强的统计卡片网格 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .stat-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e8e8e8;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, rgba(32, 178, 170, 0.3) 0%, rgba(79, 209, 197, 0.3) 100%);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover .stat-icon {
+            transform: rotate(10deg) scale(1.1);
+        }
+        
+        .stat-icon.blue { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .stat-icon.green { background: linear-gradient(135deg, #48bb78, #38a169); }
+        .stat-icon.orange { background: linear-gradient(135deg, #ed8936, #dd6b20); }
+        .stat-icon.purple { background: linear-gradient(135deg, #9f7aea, #805ad5); }
+        
+        .stat-content h3 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: #2C3E50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-content p {
+            color: #6c757d;
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .stat-change {
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: #f8f9fa;
+        }
+        
+        .stat-change.positive {
+            color: #48bb78;
+            background: #f0fff4;
+            border: 1px solid #c6f6d5;
+        }
+        .stat-change.negative {
+            color: #ef4444;
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+        }
+        
+        /* 增强的图表容器 */
+        .dashboard-charts {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .chart-container {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8e8e8;
+        }
+        
+        .chart-container h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2C3E50;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-left: 16px;
+        }
+        
+        .chart-container h3::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, #20B2AA 0%, #4FD1C5 100%);
+            border-radius: 2px;
+        }
+        
+        /* 增强的最近活动 */
+        .recent-activities {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8e8e8;
+        }
+        
+        .recent-activities h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2C3E50;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-left: 16px;
+        }
+        
+        .recent-activities h3::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, #20B2AA 0%, #4FD1C5 100%);
+            border-radius: 2px;
+        }
+        
+        .activity-list {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            padding: 1.2rem 0;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .activity-item:hover {
+            background: #f8f9fa;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .activity-item:hover .activity-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        .activity-content {
+            flex: 1;
+        }
+        
+        .activity-content h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2C3E50;
+            margin-bottom: 0.4rem;
+        }
+        
+        .activity-content p {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin: 0;
+        }
+        
+        .activity-time {
+            font-size: 0.85rem;
+            color: #adb5bd;
+            font-weight: 500;
+        }
+        
+        /* 增强的按钮样式 */
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #20B2AA 0%, #4FD1C5 100%);
+            color: #fff;
+            border: 2px solid transparent;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(32, 178, 170, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 2px solid #e9ecef;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* 响应式设计增强 */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 0 1rem;
+                height: 70px;
+            }
+            
+            .main-content {
+                padding: 1.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1.5rem;
+            }
+            
+            .dashboard-charts {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .page-header {
+                padding: 1.5rem;
+            }
+            
+            .page-header h2 {
+                font-size: 1.8rem;
+            }
+            
+            .nav-menu {
+                gap: 0.3rem;
+            }
+            
+            .nav-item {
+                padding: 0.8rem 1rem;
+                font-size: 14px;
+            }
+            
+            .nav-item span {
+                display: none; /* 移动端隐藏文字，只显示图标 */
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-card {
+                padding: 1.5rem;
+            }
+            
+            .stat-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .stat-content h3 {
+                font-size: 2rem;
+            }
+            
+            .logo {
+                padding: 8px 16px;
+            }
+            
+            .logo h1 {
+                font-size: 1.3rem;
+            }
+            
+            .demo-badge {
+                display: none;
+            }
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .page.active {
+            display: block;
+            animation: fadeIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .stat-card {
+            animation: slideInUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+        
+        /* 高对比度模式支持 */
+        @media (prefers-contrast: high) {
+            .stat-card {
+                border: 2px solid #000;
+            }
+            
+            .nav-item {
+                border: 2px solid #000;
+            }
+            
+            .btn {
+                border: 2px solid #000;
+            }
+        }
+        
+        /* 减少动画模式支持 */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* 深色模式支持 */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+                color: #fff;
+            }
+            
+            .header {
+                background: linear-gradient(135deg, #2d2d2d 0%, #404040 100%);
+            }
+            
+            .page-header,
+            .stat-card,
+            .chart-container,
+            .recent-activities {
+                background: #2d2d2d;
+                border-color: #404040;
+            }
+            
+            .page-header h2,
+            .stat-content h3,
+            .chart-container h3,
+            .recent-activities h3 {
+                color: #fff;
+            }
+            
+            .stat-content p,
+            .activity-content p,
+            .activity-time {
+                color: #ccc;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部导航栏 -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-hands-helping"></i>
+                    <h1>长辈助手管理后台</h1>
+                    <span class="demo-badge">演示版</span>
+                </div>
+                <nav class="nav-menu">
+                    <a href="#dashboard" class="nav-item active" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>仪表盘</span>
+                    </a>
+                    <a href="#users" class="nav-item" data-page="users">
+                        <i class="fas fa-users"></i>
+                        <span>用户管理</span>
+                    </a>
+                    <a href="#monitoring" class="nav-item" data-page="monitoring">
+                        <i class="fas fa-chart-line"></i>
+                        <span>实时监控</span>
+                    </a>
+                    <a href="#notifications" class="nav-item" data-page="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span>通知中心</span>
+                        <span class="notification-badge" id="notificationBadge">3</span>
+                    </a>
+                </nav>
+                <div class="user-info">
+                    <span class="current-time" id="currentTime"></span>
+                    <div class="user-avatar">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <!-- 仪表盘页面 -->
+            <div class="page dashboard-page active" id="dashboard">
+                <div class="page-header">
+                    <h2>数据总览</h2>
+                    <p>实时监控系统状态和用户活动（演示数据）</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>156</h3>
+                            <p>注册用户</p>
+                            <span class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> 12%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>89</h3>
+                            <p>今日活跃</p>
+                            <span class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> 8%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>5</h3>
+                            <p>待处理事件</p>
+                            <span class="stat-change negative">
+                                <i class="fas fa-arrow-down"></i> 3%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>98.5%</h3>
+                            <p>用户满意度</p>
+                            <span class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> 2%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-charts">
+                    <div class="chart-container">
+                        <h3>用户活跃度趋势（最近7天）</h3>
+                        <canvas id="activityChart" width="800" height="300"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>异常事件分布</h3>
+                        <canvas id="eventsChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+
+                <div class="recent-activities">
+                    <h3>最近活动</h3>
+                    <div class="activity-list" id="recentActivities">
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background: #48bb78">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>用户登录</h4>
+                                <p>张大爷成功登录系统</p>
+                            </div>
+                            <div class="activity-time">2分钟前</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background: #ed8936">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>异常事件</h4>
+                                <p>检测到连续误触操作</p>
+                            </div>
+                            <div class="activity-time">5分钟前</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background: #667eea">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>家属添加</h4>
+                                <p>李阿姨添加了新的家属联系方式</p>
+                            </div>
+                            <div class="activity-time">10分钟前</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background: #9f7aea">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>应用使用</h4>
+                                <p>王大爷正在使用微信</p>
+                            </div>
+                            <div class="activity-time">15分钟前</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background: #ef4444">
+                                <i class="fas fa-hands-helping"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h4>求助请求</h4>
+                                <p>用户请求远程协助</p>
+                            </div>
+                            <div class="activity-time">20分钟前</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用户管理页面 -->
+            <div class="page users-page" id="users">
+                <div class="page-header">
+                    <div class="header-left">
+                        <h2>用户管理</h2>
+                        <p>管理和查看所有注册用户信息（演示数据）</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showDemoNotification()">
+                        <i class="fas fa-plus"></i>
+                        添加用户（演示）
+                    </button>
+                </div>
+
+                <div class="users-filters">
+                    <div class="filter-group">
+                        <input type="text" placeholder="搜索用户姓名或手机号" id="userSearch">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <select id="statusFilter">
+                        <option value="">所有状态</option>
+                        <option value="active">活跃用户</option>
+                        <option value="inactive">非活跃用户</option>
+                    </select>
+                </div>
+
+                <div class="users-table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>用户信息</th>
+                                <th>设备ID</th>
+                                <th>主要家属</th>
+                                <th>注册时间</th>
+                                <th>最后活跃</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr>
+                                <td>
+                                    <div class="user-info-cell">
+                                        <div class="user-avatar-small">张</div>
+                                        <div class="user-details">
+                                            <h4>张大爷</h4>
+                                            <p>138****5678</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>DEVICE_001</td>
+                                <td>张小明 (子女)</td>
+                                <td>2024-01-15 09:30</td>
+                                <td>2024-12-11 14:23</td>
+                                <td><span class="status-badge active">活跃</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn" title="查看详情"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn" title="添加家属"><i class="fas fa-user-plus"></i></button>
+                                        <button class="action-btn" title="编辑用户"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn" title="删除用户"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="user-info-cell">
+                                        <div class="user-avatar-small">李</div>
+                                        <div class="user-details">
+                                            <h4>李阿姨</h4>
+                                            <p>139****1234</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>DEVICE_002</td>
+                                <td>李小红 (子女)</td>
+                                <td>2024-02-20 10:15</td>
+                                <td>2024-12-11 13:45</td>
+                                <td><span class="status-badge active">活跃</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn" title="查看详情"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn" title="添加家属"><i class="fas fa-user-plus"></i></button>
+                                        <button class="action-btn" title="编辑用户"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn" title="删除用户"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="user-info-cell">
+                                        <div class="user-avatar-small">王</div>
+                                        <div class="user-details">
+                                            <h4>王大爷</h4>
+                                            <p>136****9876</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>DEVICE_003</td>
+                                <td>王小军 (子女)</td>
+                                <td>2024-03-10 14:20</td>
+                                <td>2024-12-10 16:30</td>
+                                <td><span class="status-badge inactive">非活跃</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn" title="查看详情"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn" title="添加家属"><i class="fas fa-user-plus"></i></button>
+                                        <button class="action-btn" title="编辑用户"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn" title="删除用户"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="user-info-cell">
+                                        <div class="user-avatar-small">赵</div>
+                                        <div class="user-details">
+                                            <h4>赵阿姨</h4>
+                                            <p>137****4321</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>DEVICE_004</td>
+                                <td>赵小丽 (子女)</td>
+                                <td>2024-04-05 11:45</td>
+                                <td>2024-12-11 15:12</td>
+                                <td><span class="status-badge active">活跃</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn" title="查看详情"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn" title="添加家属"><i class="fas fa-user-plus"></i></button>
+                                        <button class="action-btn" title="编辑用户"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn" title="删除用户"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="user-info-cell">
+                                        <div class="user-avatar-small">孙</div>
+                                        <div class="user-details">
+                                            <h4>孙大爷</h4>
+                                            <p>135****6789</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>DEVICE_005</td>
+                                <td>孙小华 (子女)</td>
+                                <td>2024-05-12 09:00</td>
+                                <td>2024-12-09 10:20</td>
+                                <td><span class="status-badge inactive">非活跃</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn" title="查看详情"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn" title="添加家属"><i class="fas fa-user-plus"></i></button>
+                                        <button class="action-btn" title="编辑用户"><i class="fas fa-edit"></i></button>
+                                        <button class="action-btn" title="删除用户"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 实时监控页面 -->
+            <div class="page monitoring-page" id="monitoring">
+                <div class="page-header">
+                    <h2>实时监控</h2>
+                    <p>监控用户当前状态和使用情况（演示数据）</p>
+                </div>
+
+                <div class="monitoring-grid">
+                    <div class="monitor-card">
+                        <h3>在线用户</h3>
+                        <div class="online-users" id="onlineUsers">
+                            <div class="online-user-item">
+                                <div class="online-indicator"></div>
+                                <div class="user-avatar-small">张</div>
+                                <div class="user-details">
+                                    <h4>张大爷</h4>
+                                    <p>使用微信</p>
+                                </div>
+                                <div class="activity-time">刚刚</div>
+                            </div>
+                            <div class="online-user-item">
+                                <div class="online-indicator"></div>
+                                <div class="user-avatar-small">李</div>
+                                <div class="user-details">
+                                    <h4>李阿姨</h4>
+                                    <p>今日步数: 2,345</p>
+                                </div>
+                                <div class="activity-time">1分钟前</div>
+                            </div>
+                            <div class="online-user-item">
+                                <div class="online-indicator"></div>
+                                <div class="user-avatar-small">王</div>
+                                <div class="user-details">
+                                    <h4>王大爷</h4>
+                                    <p>观看新闻</p>
+                                </div>
+                                <div class="activity-time">2分钟前</div>
+                            </div>
+                            <div class="online-user-item">
+                                <div class="online-indicator"></div>
+                                <div class="user-avatar-small">赵</div>
+                                <div class="user-details">
+                                    <h4>赵阿姨</h4>
+                                    <p>通话中</p>
+                                </div>
+                                <div class="activity-time">3分钟前</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="monitor-card">
+                        <h3>实时事件流</h3>
+                        <div class="event-stream" id="eventStream">
+                            <div class="event-item">
+                                <div class="event-time">刚刚</div>
+                                <div class="event-content">
+                                    <div class="event-type">应用启动</div>
+                                    <div>张大爷启动了微信应用</div>
+                                </div>
+                            </div>
+                            <div class="event-item">
+                                <div class="event-time">1分钟前</div>
+                                <div class="event-content">
+                                    <div class="event-type">按钮点击</div>
+                                    <div>李阿姨点击了"发送消息"按钮</div>
+                                </div>
+                            </div>
+                            <div class="event-item">
+                                <div class="event-time">3分钟前</div>
+                                <div class="event-content">
+                                    <div class="event-type">错误检测</div>
+                                    <div>检测到王大爷连续误触3次</div>
+                                </div>
+                            </div>
+                            <div class="event-item">
+                                <div class="event-time">5分钟前</div>
+                                <div class="event-content">
+                                    <div class="event-type">语音辅助</div>
+                                    <div>赵阿姨使用了语音朗读功能</div>
+                                </div>
+                            </div>
+                            <div class="event-item">
+                                <div class="event-time">8分钟前</div>
+                                <div class="event-content">
+                                    <div class="event-type">悬浮球操作</div>
+                                    <div>孙大爷点击了悬浮球助手</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="monitoring-details">
+                    <div class="user-detail-card" id="userDetailCard" style="display: none;">
+                        <h3>用户详情</h3>
+                        <div class="user-detail-content">
+                            <div class="user-info-section">
+                                <h4>基本信息</h4>
+                                <p><strong>姓名:</strong> 张大爷</p>
+                                <p><strong>手机:</strong> 138****5678</p>
+                                <p><strong>邮箱:</strong> zhang@example.com</p>
+                                <p><strong>注册时间:</strong> 2024-01-15 09:30</p>
+                                <p><strong>最后活跃:</strong> 2024-12-11 14:23</p>
+                            </div>
+                            
+                            <div class="family-section">
+                                <h4>家属信息</h4>
+                                <div class="family-member">
+                                    <p><strong>张小明</strong> (子女)</p>
+                                    <p>电话: 139****1111</p>
+                                    <span class="status-badge active">主要联系人</span>
+                                </div>
+                                <div class="family-member">
+                                    <p><strong>张小红</strong> (子女)</p>
+                                    <p>电话: 138****2222</p>
+                                </div>
+                            </div>
+                            
+                            <div class="usage-section">
+                                <h4>最近使用记录</h4>
+                                <div class="usage-log">
+                                    <p><strong>微信</strong> - 发送消息</p>
+                                    <p>2024-12-11 14:23</p>
+                                </div>
+                                <div class="usage-log">
+                                    <p><strong>电话</strong> - 拨打电话</p>
+                                    <p>2024-12-11 13:45</p>
+                                </div>
+                                <div class="usage-log">
+                                    <p><strong>新闻</strong> - 阅读新闻</p>
+                                    <p>2024-12-11 12:30</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 通知中心页面 -->
+            <div class="page notifications-page" id="notifications">
+                <div class="page-header">
+                    <h2>通知中心</h2>
+                    <p>查看和管理系统通知（演示数据）</p>
+                </div>
+
+                <div class="notifications-filters">
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="warning">警告</button>
+                    <button class="filter-btn" data-filter="info">信息</button>
+                    <button class="filter-btn" data-filter="success">成功</button>
+                </div>
+
+                <div class="notifications-list" id="notificationsList">
+                    <div class="notification-item unread">
+                        <div class="notification-icon warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">异常事件提醒</div>
+                            <div class="notification-message">张大爷连续触发了5次误操作，建议检查</div>
+                            <div class="notification-time">10分钟前</div>
+                        </div>
+                    </div>
+                    <div class="notification-item unread">
+                        <div class="notification-icon info">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">用户添加成功</div>
+                            <div class="notification-message">新用户李阿姨已成功注册</div>
+                            <div class="notification-time">1小时前</div>
+                        </div>
+                    </div>
+                    <div class="notification-item unread">
+                        <div class="notification-icon success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">远程协助完成</div>
+                            <div class="notification-message">已成功帮助王大爷解决微信使用问题</div>
+                            <div class="notification-time">2小时前</div>
+                        </div>
+                    </div>
+                    <div class="notification-item">
+                        <div class="notification-icon error">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">连接失败</div>
+                            <div class="notification-message">无法连接到赵阿姨的设备</div>
+                            <div class="notification-time">3小时前</div>
+                        </div>
+                    </div>
+                    <div class="notification-item">
+                        <div class="notification-icon info">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">系统更新</div>
+                            <div class="notification-message">系统已更新到最新版本v2.1.0</div>
+                            <div class="notification-time">5小时前</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 演示版JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDemo();
+        });
+
+        function initializeDemo() {
+            // 初始化导航
+            initializeNavigation();
+            
+            // 初始化时间显示
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            
+            // 初始化筛选器
+            initializeFilters();
+            
+            // 初始化图表
+            initializeCharts();
+            
+            // 模拟实时数据更新
+            simulateRealTimeUpdates();
+        }
+
+        function initializeNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const targetPage = this.dataset.page;
+                    if (!target

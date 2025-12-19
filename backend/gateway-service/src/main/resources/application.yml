@@ -1,0 +1,353 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  
+  cloud:
+    gateway:
+      # 路由配置
+      routes:
+        # 用户服务路由
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**,/api/auth/**
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+        
+        # 设备服务路由
+        - id: device-service
+          uri: lb://device-service
+          predicates:
+            - Path=/api/devices/**
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 15
+                redis-rate-limiter.burstCapacity: 30
+                key-resolver: "#{@userKeyResolver}"
+        
+        # 监控服务路由
+        - id: monitoring-service
+          uri: lb://monitoring-service
+          predicates:
+            - Path=/api/monitoring/**
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
+        
+        # 预警服务路由
+        - id: alert-service
+          uri: lb://alert-service
+          predicates:
+            - Path=/api/alerts/**
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+        
+        # 历史数据服务路由
+        - id: history-service
+          uri: lb://history-service
+          predicates:
+            - Path=/api/history/**
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 15
+                redis-rate-limiter.burstCapacity: 30
+                key-resolver: "#{@userKeyResolver}"
+        
+        # 通知服务路由
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 25
+                redis-rate-limiter.burstCapacity: 50
+                key-resolver: "#{@userKeyResolver}"
+      
+      # 全局CORS配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+      
+      # 熔断器配置
+      circuitbreaker:
+        configs:
+          default:
+            failure-rate-threshold: 50
+            minimum-number-of-calls: 10
+            automatic-transition-from-open-to-half-open-enabled: true
+            wait-duration-in-open-state: 30s
+            sliding-window-size: 20
+            sliding-window-type: count_based
+
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 
+      database: 0
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# 日志配置
+logging:
+  level:
+    com.elderly.monitoring: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/gateway-service.log
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+
+# Eureka客户端配置
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# JWT配置
+jwt:
+  secret: elderly-monitoring-jwt-secret-key-2023
+  expiration: 86400000 # 24小时
+  refresh-expiration: 604800000 # 7天
+
+# 自定义配置
+gateway:
+  # 安全配置
+  security:
+    # 不需要认证的路径
+    public-paths:
+      - /api/auth/login
+      - /api/auth/register
+      - /api/auth/refresh
+      - /actuator/**
+      - /swagger-ui/**
+      - /v3/api-docs/**
+    
+    # 需要管理员权限的路径
+    admin-paths:
+      - /api/users/**
+      - /api/devices/batch
+      - /api/alerts/rules/**
+      - /api/system/**
+    
+    # 需要超级管理员权限的路径
+    super-admin-paths:
+      - /api/system/backup
+      - /api/system/restore
+      - /api/system/cleanup
+
+  # 限流配置
+  rate-limit:
+    # 默认配置
+    default:
+      replenish-rate: 10
+      burst-capacity: 20
+      request-timeout: 5000
+    
+    # 特殊路径配置
+    paths:
+      /api/auth/**:
+        replenish-rate: 5
+        burst-capacity: 10
+        request-timeout: 3000
+      
+      /api/monitoring/realtime:
+        replenish-rate: 30
+        burst-capacity: 60
+        request-timeout: 1000
+      
+      /api/history/export/**:
+        replenish-rate: 2
+        burst-capacity: 5
+        request-timeout: 30000
+
+  # 重试配置
+  retry:
+    enabled: true
+    max-attempts: 3
+    backoff:
+      first-backoff: 50ms
+      max-backoff: 500ms
+      factor: 2
+    statuses:
+      - BAD_GATEWAY
+      - GATEWAY_TIMEOUT
+      - INTERNAL_SERVER_ERROR
+      - SERVICE_UNAVAILABLE
+
+  # 超时配置
+  timeout:
+    connect-timeout: 5000
+    response-timeout: 30000
+    
+  # 负载均衡配置
+  load-balancer:
+    ribbon:
+      enabled: false
+    # 使用Spring Cloud LoadBalancer
+    strategy: round_robin # round_robin, random, weighted_response_time
+
+  # 缓存配置
+  cache:
+    enabled: true
+    ttl: 300 # 5分钟
+    max-size: 1000
+    cache-paths:
+      - /api/users/profile
+      - /api/devices/status
+      - /api/monitoring/statistics
+
+---
+# 开发环境配置
+spring:
+  config:
+    activate:
+      on-profile: dev
+  
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/users/**,/api/auth/**
+          filters:
+            - StripPrefix=0
+        
+        - id: device-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/devices/**
+          filters:
+            - StripPrefix=0
+        
+        - id: monitoring-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/monitoring/**
+          filters:
+            - StripPrefix=0
+        
+        - id: alert-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/alerts/**
+          filters:
+            - StripPrefix=0
+        
+        - id: history-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/history/**
+          filters:
+            - StripPrefix=0
+        
+        - id: notification-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=0
+
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE
+    reactor.netty: TRACE
+
+---
+# 测试环境配置
+spring:
+  config:
+    activate:
+      on-profile: test
+
+eureka:
+  client:
+    enabled: false
+
+---
+# 生产环境配置
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+logging:
+  level:
+    com.elderly.monitoring: INFO
+    org.springframework.cloud.gateway: INFO
+    org.springframework.web.reactive: WARN
+    reactor.netty: WARN
+
+gateway:
+  security:
+    jwt-secret: ${JWT_SECRET:elderly-monitoring-production-jwt-secret}
+  
+  rate-limit:
+    default:
+      replenish-rate: 20
+      burst-capacity: 40
+  
+  timeout:
+    connect-timeout: 3000
+    response-timeout: 20000

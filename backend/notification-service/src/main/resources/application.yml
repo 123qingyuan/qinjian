@@ -1,0 +1,143 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: notification-service
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/elderly_monitoring
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 
+      database: 0
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  # 邮件配置
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: your-email@qq.com
+    password: your-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# 日志配置
+logging:
+  level:
+    com.elderly.monitoring: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/notification-service.log
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# Eureka客户端配置
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# 自定义配置
+notification:
+  # 邮件配置
+  email:
+    enabled: true
+    from: noreply@elderly-monitoring.com
+    template-path: templates/email/
+    
+  # 短信配置
+  sms:
+    enabled: true
+    provider: aliyun
+    access-key: your-access-key
+    secret-key: your-secret-key
+    sign-name: 老人监护系统
+    template-code: SMS_123456789
+    
+  # 推送配置
+  push:
+    enabled: true
+    provider: firebase
+    server-key: your-server-key
+    ttl: 3600
+    
+  # 微信配置
+  wechat:
+    enabled: true
+    app-id: your-app-id
+    app-secret: your-app-secret
+    template-id: your-template-id
+    
+  # 语音配置
+  voice:
+    enabled: true
+    provider: aliyun
+    access-key: your-access-key
+    secret-key: your-secret-key
+    
+  # 批量处理配置
+  batch:
+    enabled: true
+    size: 100
+    interval: 60s
+    
+  # 重试配置
+  retry:
+    enabled: true
+    max-attempts: 3
+    delay: 5000ms
+    
+  # 清理配置
+  cleanup:
+    enabled: true
+    cron: "0 0 2 * * ?" # 每天凌晨2点执行
+    retention-days: 30
+    
+  # 统计配置
+  statistics:
+    enabled: true
+    cron: "0 0 1 * * ?" # 每天凌晨1点执行

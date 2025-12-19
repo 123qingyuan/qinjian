@@ -1,0 +1,126 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      # 全局CORS配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+      # 默认过滤器
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      # 路由配置
+      routes:
+        # 用户管理服务
+        - id: user-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/users/**
+          filters:
+            - StripPrefix=0
+        
+        # 设备管理服务
+        - id: device-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/devices/**
+          filters:
+            - StripPrefix=0
+        
+        # 实时监控服务
+        - id: monitoring-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/v1/monitoring/**
+          filters:
+            - StripPrefix=0
+        
+        # 预警系统服务
+        - id: alert-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/v1/alerts/**
+          filters:
+            - StripPrefix=0
+        
+        # 历史数据服务
+        - id: history-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/v1/history/**
+          filters:
+            - StripPrefix=0
+        
+        # 消息通知服务
+        - id: notification-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/v1/notifications/**
+          filters:
+            - StripPrefix=0
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# JWT配置
+jwt:
+  secret: elderly-monitoring-jwt-secret-key-2024
+  expiration: 86400000 # 24小时
+
+# 熔断器配置
+resilience4j:
+  circuitbreaker:
+    instances:
+      user-service:
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        slidingWindowSize: 10
+      device-service:
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        slidingWindowSize: 10
+      monitoring-service:
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        slidingWindowSize: 10
+      alert-service:
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        slidingWindowSize: 10
+      history-service:
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        slidingWindowSize: 10
+      notification-service:
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        slidingWindowSize: 10

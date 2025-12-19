@@ -1,0 +1,373 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 主数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: elderly_postgres
+    environment:
+      POSTGRES_DB: elderly_monitoring
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./migrations:/docker-entrypoint-initdb.d/migrations
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Redis 缓存数据库
+  redis:
+    image: redis:7-alpine
+    container_name: elderly_redis
+    command: redis-server --appendonly yes --requirepass redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # InfluxDB 时序数据库
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: elderly_influxdb
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: influx_password
+      DOCKER_INFLUXDB_INIT_ORG: elderly_monitoring
+      DOCKER_INFLUXDB_INIT_BUCKET: health_data
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: elderly_monitoring_influxdb_token
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Eureka 服务注册中心
+  eureka:
+    image: openjdk:17-jre-slim
+    container_name: elderly_eureka
+    working_dir: /app
+    command: ["java", "-jar", "eureka-service.jar"]
+    ports:
+      - "8761:8761"
+    volumes:
+      - ../eureka-service/target/eureka-service-1.0.0.jar:/app/eureka-service.jar
+      - eureka_logs:/app/logs
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+
+  # API 网关
+  gateway:
+    image: openjdk:17-jre-slim
+    container_name: elderly_gateway
+    working_dir: /app
+    command: ["java", "-jar", "gateway-service.jar"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../gateway-service/target/gateway-service-1.0.0.jar:/app/gateway-service.jar
+      - gateway_logs:/app/logs
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xms512m -Xmx1024m"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PASSWORD: redis_password
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    depends_on:
+      - eureka
+      - postgres
+      - redis
+
+  # 用户服务
+  user-service:
+    image: openjdk:17-jre-slim
+    container_name: elderly_user_service
+    working_dir: /app
+    command: ["java", "-jar", "user-service.jar"]
+    ports:
+      - "8081:8081"
+    volumes:
+      - ../user-service/target/user-service-1.0.0.jar:/app/user-service.jar
+      - user_service_logs:/app/logs
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elderly_monitoring
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    depends_on:
+      - eureka
+      - postgres
+
+  # 设备服务
+  device-service:
+    image: openjdk:17-jre-slim
+    container_name: elderly_device_service
+    working_dir: /app
+    command: ["java", "-jar", "device-service.jar"]
+    ports:
+      - "8082:8082"
+    volumes:
+      - ../device-service/target/device-service-1.0.0.jar:/app/device-service.jar
+      - device_service_logs:/app/logs
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elderly_monitoring
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    depends_on:
+      - eureka
+      - postgres
+
+  # 监控服务
+  monitoring-service:
+    image: openjdk:17-jre-slim
+    container_name: elderly_monitoring_service
+    working_dir: /app
+    command: ["java", "-jar", "monitoring-service.jar"]
+    ports:
+      - "8083:8083"
+    volumes:
+      - ../monitoring-service/target/monitoring-service-1.0.0.jar:/app/monitoring-service.jar
+      - monitoring_service_logs:/app/logs
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xms512m -Xmx1024m"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elderly_monitoring
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: elderly_monitoring_influxdb_token
+      INFLUXDB_ORG: elderly_monitoring
+      INFLUXDB_BUCKET: health_data
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    depends_on:
+      - eureka
+      - postgres
+      - influxdb
+
+  # 预警服务
+  alert-service:
+    image: openjdk:17-jre-slim
+    container_name: elderly_alert_service
+    working_dir: /app
+    command: ["java", "-jar", "alert-service.jar"]
+    ports:
+      - "8084:8084"
+    volumes:
+      - ../alert-service/target/alert-service-1.0.0.jar:/app/alert-service.jar
+      - alert_service_logs:/app/logs
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elderly_monitoring
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    depends_on:
+      - eureka
+      - postgres
+
+  # 历史数据服务
+  history-service:
+    image: openjdk:17-jre-slim
+    container_name: elderly_history_service
+    working_dir: /app
+    command: ["java", "-jar", "history-service.jar"]
+    ports:
+      - "8085:8085"
+    volumes:
+      - ../history-service/target/history-service-1.0.0.jar:/app/history-service.jar
+      - history_service_logs:/app/logs
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elderly_monitoring
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    depends_on:
+      - eureka
+      - postgres
+
+  # 通知服务
+  notification-service:
+    image: openjdk:17-jre-slim
+    container_name: elderly_notification_service
+    working_dir: /app
+    command: ["java", "-jar", "notification-service.jar"]
+    ports:
+      - "8086:8086"
+    volumes:
+      - ../notification-service/target/notification-service-1.0.0.jar:/app/notification-service.jar
+      - notification_service_logs:/app/logs
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elderly_monitoring
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PASSWORD: redis_password
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    depends_on:
+      - eureka
+      - postgres
+      - redis
+
+  # Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: elderly_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+      - nginx_logs:/var/log/nginx
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    depends_on:
+      - gateway
+
+  # Prometheus 监控
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: elderly_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  # Grafana 可视化
+  grafana:
+    image: grafana/grafana:latest
+    container_name: elderly_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: grafana_password
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - elderly_network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  influxdb_data:
+    driver: local
+  influxdb_config:
+    driver: local
+  eureka_logs:
+    driver: local
+  gateway_logs:
+    driver: local
+  user_service_logs:
+    driver: local
+  device_service_logs:
+    driver: local
+  monitoring_service_logs:
+    driver: local
+  alert_service_logs:
+    driver: local
+  history_service_logs:
+    driver: local
+  notification_service_logs:
+    driver: local
+  nginx_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  elderly_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

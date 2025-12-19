@@ -1,0 +1,355 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "老人监护管理系统监控仪表板",
+    "tags": ["elderly-monitoring", "production"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "系统概览",
+        "type": "stat",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "up{job=~\".*-service\"}",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "options": {
+                  "0": {
+                    "text": "离线",
+                    "color": "red"
+                  },
+                  "1": {
+                    "text": "在线",
+                    "color": "green"
+                  }
+                },
+                "type": "value"
+              }
+            ],
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
+              ]
+            }
+          }
+        },
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "请求速率",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m])) by (instance)",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "请求/秒"
+          }
+        ],
+        "xAxes": [
+          {
+            "label": "时间"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "响应时间分布",
+        "type": "heatmap",
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
+        "targets": [
+          {
+            "expr": "rate(http_request_duration_seconds_bucket[5m])",
+            "legendFormat": "{{le}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "错误率",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (instance) / sum(rate(http_requests_total[5m])) by (instance) * 100",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "错误率 (%)",
+            "max": 100,
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "CPU使用率",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        },
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total[5m]) * 100",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "CPU使用率 (%)",
+            "max": 100,
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "内存使用率",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
+        "targets": [
+          {
+            "expr": "(jvm_memory_used_bytes / jvm_memory_max_bytes) * 100",
+            "legendFormat": "{{instance}}-{{area}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "内存使用率 (%)",
+            "max": 100,
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "健康数据接收量",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        },
+        "targets": [
+          {
+            "expr": "rate(health_data_received_total[5m])",
+            "legendFormat": "健康数据接收速率",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "数据/秒"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "设备状态",
+        "type": "stat",
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 32
+        },
+        "targets": [
+          {
+            "expr": "sum(device_online_status)",
+            "legendFormat": "在线设备",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "预警数量",
+        "type": "stat",
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 32
+        },
+        "targets": [
+          {
+            "expr": "sum(alerts_created_total)",
+            "legendFormat": "总预警数",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "通知发送成功率",
+        "type": "stat",
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 32
+        },
+        "targets": [
+          {
+            "expr": "rate(notification_sent_total[5m]) / (rate(notification_sent_total[5m]) + rate(notification_sent_failed_total[5m])) * 100",
+            "legendFormat": "成功率",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 80
+                },
+                {
+                  "color": "green",
+                  "value": 95
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "数据库连接数",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 40
+        },
+        "targets": [
+          {
+            "expr": "pg_stat_database_numbackends",
+            "legendFormat": "活跃连接数",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "连接数"
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Redis内存使用",
+        "type": "graph",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 40
+        },
+        "targets": [
+          {
+            "expr": "redis_memory_used_bytes / 1024 / 1024",
+            "legendFormat": "内存使用 (MB)",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "内存 (MB)"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}

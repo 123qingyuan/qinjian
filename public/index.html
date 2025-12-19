@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>长辈级界面助手 - 家属管理后台</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部导航栏 -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-hands-helping"></i>
+                    <h1>长辈助手管理后台</h1>
+                </div>
+                <nav class="nav-menu">
+                    <a href="#dashboard" class="nav-item active" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>仪表盘</span>
+                    </a>
+                    <a href="#users" class="nav-item" data-page="users">
+                        <i class="fas fa-users"></i>
+                        <span>用户管理</span>
+                    </a>
+                    <a href="#monitoring" class="nav-item" data-page="monitoring">
+                        <i class="fas fa-chart-line"></i>
+                        <span>实时监控</span>
+                    </a>
+                    <a href="#notifications" class="nav-item" data-page="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span>通知中心</span>
+                        <span class="notification-badge" id="notificationBadge">0</span>
+                    </a>
+                </nav>
+                <div class="user-info">
+                    <span class="current-time" id="currentTime"></span>
+                    <div class="user-avatar">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <!-- 仪表盘页面 -->
+            <div class="page dashboard-page active" id="dashboard">
+                <div class="page-header">
+                    <h2>数据总览</h2>
+                    <p>实时监控系统状态和用户活动</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalUsers">-</h3>
+                            <p>注册用户</p>
+                            <span class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> 12%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="activeToday">-</h3>
+                            <p>今日活跃</p>
+                            <span class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> 8%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="unresolvedEvents">-</h3>
+                            <p>待处理事件</p>
+                            <span class="stat-change negative">
+                                <i class="fas fa-arrow-down"></i> 3%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>98.5%</h3>
+                            <p>用户满意度</p>
+                            <span class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> 2%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-charts">
+                    <div class="chart-container">
+                        <h3>用户活跃度趋势</h3>
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>异常事件分布</h3>
+                        <canvas id="eventsChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="recent-activities">
+                    <h3>最近活动</h3>
+                    <div class="activity-list" id="recentActivities">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用户管理页面 -->
+            <div class="page users-page" id="users">
+                <div class="page-header">
+                    <div class="header-left">
+                        <h2>用户管理</h2>
+                        <p>管理和查看所有注册用户信息</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showAddUserModal()">
+                        <i class="fas fa-plus"></i>
+                        添加用户
+                    </button>
+                </div>
+
+                <div class="users-filters">
+                    <div class="filter-group">
+                        <input type="text" placeholder="搜索用户姓名或手机号" id="userSearch">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <select id="statusFilter">
+                        <option value="">所有状态</option>
+                        <option value="active">活跃用户</option>
+                        <option value="inactive">非活跃用户</option>
+                    </select>
+                </div>
+
+                <div class="users-table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>用户信息</th>
+                                <th>设备ID</th>
+                                <th>主要家属</th>
+                                <th>注册时间</th>
+                                <th>最后活跃</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- 动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 实时监控页面 -->
+            <div class="page monitoring-page" id="monitoring">
+                <div class="page-header">
+                    <h2>实时监控</h2>
+                    <p>监控用户当前状态和使用情况</p>
+                </div>
+
+                <div class="monitoring-grid">
+                    <div class="monitor-card">
+                        <h3>在线用户</h3>
+                        <div class="online-users" id="onlineUsers">
+                            <!-- 动态生成 -->
+                        </div>
+                    </div>
+
+                    <div class="monitor-card">
+                        <h3>实时事件流</h3>
+                        <div class="event-stream" id="eventStream">
+                            <!-- 动态生成 -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="monitoring-details">
+                    <div class="user-detail-card" id="userDetailCard" style="display: none;">
+                        <h3>用户详情</h3>
+                        <div class="user-detail-content">
+                            <!-- 动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 通知中心页面 -->
+            <div class="page notifications-page" id="notifications">
+                <div class="page-header">
+                    <h2>通知中心</h2>
+                    <p>查看和管理系统通知</p>
+                </div>
+
+                <div class="notifications-filters">
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="warning">警告</button>
+                    <button class="filter-btn" data-filter="info">信息</button>
+                    <button class="filter-btn" data-filter="success">成功</button>
+                </div>
+
+                <div class="notifications-list" id="notificationsList">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 模态框 -->
+    <div class="modal" id="addUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加新用户</h3>
+                <button class="close-btn" onclick="closeModal('addUserModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addUserForm">
+                <div class="form-group">
+                    <label>用户姓名 *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>手机号码</label>
+                    <input type="tel" name="phone">
+                </div>
+                <div class="form-group">
+                    <label>邮箱地址</label>
+                    <input type="email" name="email">
+                </div>
+                <div class="form-group">
+                    <label>设备ID</label>
+                    <input type="text" name="deviceId">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addUserModal')">取消</button>
+                    <button type="submit" class="btn btn-primary">确认添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 添加家属模态框 -->
+    <div class="modal" id="addFamilyMemberModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加家属成员</h3>
+                <button class="close-btn" onclick="closeModal('addFamilyMemberModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addFamilyMemberForm">
+                <div class="form-group">
+                    <label>家属姓名 *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>手机号码</label>
+                    <input type="tel" name="phone">
+                </div>
+                <div class="form-group">
+                    <label>关系 *</label>
+                    <select name="relationship" required>
+                        <option value="">请选择关系</option>
+                        <option value="子女">子女</option>
+                        <option value="配偶">配偶</option>
+                        <option value="兄弟姐妹">兄弟姐妹</option>
+                        <option value="其他亲属">其他亲属</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="isPrimary"> 设为主要联系人
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addFamilyMemberModal')">取消</button>
+                    <button type="submit" class="btn btn-primary">确认添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
