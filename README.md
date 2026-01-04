@@ -314,24 +314,5 @@ git commit -m "docs: 更新API文档"
 ## 联系我们
 
 - **项目维护者**: 老人监护管理系统团队
-- **技术支持**: tech-support@elderly-monitoring.com
-- **问题反馈**: https://github.com/your-org/elderly-monitoring-system/issues
-
-## 更新日志
-
-### v1.0.0 (2024-01-01)
-- 完成系统核心功能开发
-- 实现用户管理、设备管理、监控服务
-- 完成预警系统、历史数据、通知功能
-- 集成监控和告警系统
-- 完善文档和测试
-
-### 开发计划
-- v1.1.0: 增加AI健康分析功能
-- v1.2.0: 支持更多设备类型
-- v1.3.0: 移动端应用开发
-- v2.0.0: 微服务架构升级
-
----
-
-**感谢您对老人监护管理系统的关注和支持！**
+- **技术支持**: https://github.com/123qingyuan
+- **问题反馈**: https://github.com/123qingyuan/qinjian
